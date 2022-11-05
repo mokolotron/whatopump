@@ -1,0 +1,27 @@
+exchange_name="BitfinexSpotFactory"     # support [BitfinexSpotFactory, ]
+INSURANCE = 2.0     # %
+MAX_ORDER_MULT = 30 # %     # decrease max order to this value
+
+[data_getter]   # need for gettings data from exchange, not required.
+    name=""     # custom string
+    key=""
+    secret=""
+    proxy={'http'='', 'https'=''}
+
+[[winners]]     # money from winners sections will be used to place grid orders for catching pump
+    name=""     # custom string
+    key=""
+    secret=""
+    proxy={'http'='', 'https'=''}
+
+[[losers]]      # money from losers sections will be used to making pump
+    name=""     # custom string
+    key=""
+    secret=""
+    proxy={'http'='', 'https'=''}   # let it as is if don't need
+
+[[losers]]
+    name=""
+    key=""
+    secret=""
+    proxy={'http'='', 'https'=''}

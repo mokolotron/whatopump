@@ -1,0 +1,9 @@
+python-binance==1.0.12
+click~=7.1.2
+requests~=2.25.1
+requests[socks]
+toml~=0.10.2
+Twisted~=20.3.0
+ccxt~=1.56.63
+bitfinex-v2-proxy
+tabulate
