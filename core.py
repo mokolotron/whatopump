@@ -7,6 +7,7 @@ from entities.Factories.AbstractFactory import AbstractFactory
 from create_logger_module import create_logger, LOG_NAME
 
 from entities.Factories.BitfinexSpotFactory import BitfinexSpotFactory
+from entities.Factories.BinanceSpotFactory import BinanceSpotFactory
 
 
 def define_factory(ex_name) -> AbstractFactory:
@@ -117,6 +118,9 @@ class Core:
 
     def calc_eval_asset(self):
         return self.controller.calc_eval_asset()
+
+    def calc_separately(self):
+        return self.controller.calc_separately()
 
     def create_win_grid(self, symbol, to_price, x, hidden, ratio, levels):
         if levels > 100:

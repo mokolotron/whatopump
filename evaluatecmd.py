@@ -90,10 +90,10 @@ def book(symbol, to_price, x_pump):
     if not (_book and cumulative_sum):
         return
     print('ASKS')
-    print(tabulate(_book['asks'], floatfmt=".5f",
+    print(tabulate(_book['asks'], floatfmt=".8f",
                    headers=['price', 'base_qty', 'quote_value', 'sum_base', 'sum_quote']))
     print('\nBIDS')
-    print(tabulate(_book['bids'], floatfmt=".5f",
+    print(tabulate(_book['bids'], floatfmt=".8f",
                    headers=['price', 'base_qty', 'quote_value', 'sum_base', 'sum_quote']))
     print('\n')
     pprint(f"{cumulative_sum} {symbol.split('/')[1]} need for pump {symbol} to price {to_price}: ")
@@ -130,11 +130,17 @@ def evaluate_by_quote(quote, x_pump):
     pprint(result)
 
 
+
 @evaluate.command("calculate_evaluated")
-def calculate_evaluated():
+@click.option('--union', '-u', 'union', is_flag=True, default=False, help="Calculate and sort for base qty (for long permanent pump)")
+def calculate_evaluated(union: bool):
+    if union:
+        result = core.calc_eval_asset()
+    else:
+        result = core.calc_separately()
     """Show result from last \'evaluate_all\' command in USD value"""
 
-    result = core.calc_eval_asset()
+
     pprint(result)
 
 

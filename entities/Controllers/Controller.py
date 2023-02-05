@@ -58,6 +58,9 @@ class Controller(ABC):
     def calc_eval_asset(self):
         raise NotImplementedError
 
+    def calc_separately(self):
+        raise NotImplementedError
+
     def eval_all(self, x_pump):
         raise NotImplementedError
 

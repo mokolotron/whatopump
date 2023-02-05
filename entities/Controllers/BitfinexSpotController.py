@@ -144,30 +144,7 @@ class BitfinexSpotController(Controller):
         return result
 
     def calc_eval_asset(self):
-        self.data_getter.fetch()
-        if not os.path.isfile('data.json'):
-            self.logger.error("File data.json not found. Run evaluate_all first")
-            return None
-        with open('data.json', 'r') as f:
-            data = json.load(f)
-            quote_s = list(data.keys())
-            convert_prices = dict()
-            for q in quote_s:
-                usdt_symbol = q + '/USDT'
-                if q == 'USD' or q == 'USDT':
-                    convert_prices[q] = 1
-                    continue
-                convert_prices[q] = self.data_getter.get_price(usdt_symbol) if self.data_getter.is_symbol_exist(usdt_symbol) else 0
-            # filter convert_prices with zero price
-            convert_prices = {k: v for k, v in convert_prices.items() if v != 0}
-            result = []
-            for quote_name, values in data.items():
-                if quote_name not in convert_prices:
-                    self.logger.warning(f"No price for convert {quote_name} to USD. skip")
-                    continue
-                convert_price = convert_prices[quote_name]
-                values_mod = [[v[0], v[1] * convert_price, v[2]] for v in values]
-                result.extend(values_mod)
+        result = self.calc_separately()
 
         base_dict = {}
         for v in result:
@@ -183,6 +160,39 @@ class BitfinexSpotController(Controller):
         with open('calculated_data.json', 'w') as f:
             json.dump(base_sorted_arr, f)
 
+        return base_sorted_arr
+
+    def calc_separately(self):
+        self.data_getter.fetch()
+        if not os.path.isfile('data.json'):
+            self.logger.error("File data.json not found. Run evaluate_all first")
+            return None
+        with open('data.json', 'r') as f:
+            data = json.load(f)
+            quote_s = list(data.keys())
+            convert_prices = dict()
+            for q in quote_s:
+                usdt_symbol = q + '/USDT'
+                if q == 'USD' or q == 'USDT':
+                    convert_prices[q] = 1
+                    continue
+                convert_prices[q] = self.data_getter.get_price(usdt_symbol) if self.data_getter.is_symbol_exist(usdt_symbol) else 0
+                # if price not found try to reverse symbol to get it price
+                if convert_prices[q] == 0:
+                    reversed_symbol = 'USDT/' + q
+                    convert_prices[q] = self.data_getter.get_price(reversed_symbol) if self.data_getter.is_symbol_exist(reversed_symbol) else 0
+            # filter convert_prices with zero price
+            convert_prices = {k: v for k, v in convert_prices.items() if v != 0}
+            result = []
+            for quote_name, values in data.items():
+                if quote_name not in convert_prices:
+                    self.logger.warning(f"No price for convert {quote_name} to USD. skip")
+                    continue
+                convert_price = convert_prices[quote_name]
+                values_mod = [[v[0], v[1] * convert_price, v[2]] for v in values]
+                result.extend(values_mod)
+
+        base_sorted_arr = sorted(result, key=itemgetter(1))
         return base_sorted_arr
 
     def create_win_grid(self, symbol, to_price, x, ratio, hidden, levels):
