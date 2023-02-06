@@ -1,3 +1,4 @@
+import logging
 from pprint import pprint
 
 import click
@@ -118,8 +119,11 @@ def cancel_all(winners, losers, name):
         core.winners_cancel_all()
     if losers:
         core.losers_cancel_all()
-    if name is not None:
+    if len(name) > 0:
+        [core.cancel_all_by_name(n) for n in name]
+    elif name:
         core.cancel_all_by_name(name)
+    pprint('Canceled')
 
 
 @pump.command('grid_winners')

@@ -17,9 +17,20 @@ class BinanceSpotExchange(BitfinexSpotExchange):
         })
         config = toml.load('settings/config.toml')
         self.client.set_sandbox_mode(config['Testnet'])
+        self.client.options['warnOnFetchOpenOrdersWithoutSymbol'] = False
+
+    def create_order(self, symbol, side, price, qty, ord_type='GTC', **kwargs):
+        response = self.client.create_order(symbol=symbol, side=side, price=price, amount=qty, type='limit')
+        return response
 
     def multi_market_orders(self, symbol, side, list_volume, _type="EXCHANGE IOC", **kwargs):
         raise NotImplementedError
+
+    def cancel_all(self):
+        orders = self.client.fetch_open_orders()
+        order_ids = [(o['id'], o['symbol']) for o in orders]
+        cancel_result = [self.client.cancel_order(id=o[0], symbol=o[1]) for o in order_ids]
+        return cancel_result
 
 
 
