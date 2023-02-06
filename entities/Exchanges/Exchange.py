@@ -36,8 +36,3 @@ class Exchange(ABC):
     def get_quote_balance_by_symbol(self, symbol):
         raise NotImplementedError
 
-    @abstractmethod
-    def create_grid(self, symbol, side, to_price, quote_bal, hidden):
-        raise NotImplementedError
-
-

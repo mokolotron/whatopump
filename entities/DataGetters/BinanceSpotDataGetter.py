@@ -3,6 +3,7 @@ from typing import List
 from entities.DataGetters.DataGetter import DataGetter
 from entities.DataGetters.BitfinexDataGetter import BitfinexDataGetter
 import ccxt
+import toml
 
 class BinanceSpotDataGetter(BitfinexDataGetter):
     def __init__(self, api_key, api_secret, proxy):
@@ -13,6 +14,8 @@ class BinanceSpotDataGetter(BitfinexDataGetter):
             'proxies': proxy
         })
         self.tickers = dict()
+        config = toml.load('settings/config.toml')
+        self.client.set_sandbox_mode(config['Testnet'])
 
     def fetch_order_book(self, symbol, **kwargs):
         book = self.client.fetch_order_book(symbol, 5000)

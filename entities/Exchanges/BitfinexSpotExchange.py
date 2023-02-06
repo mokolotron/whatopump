@@ -78,9 +78,6 @@ class BitfinexSpotExchange(SpotExchange):
         self.client.load_markets()
         self.client.cancel_all_orders()
 
-    def create_grid(self, symbol, side, to_price, quote_bal, hidden):
-        pass
-
 
 
 
