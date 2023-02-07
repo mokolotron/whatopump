@@ -31,7 +31,7 @@ def make_pump(name, symbol, to_price, x_pump, quote_qty):
         print('Please, input -p or -x')
         return
 
-    if len(name) > 1:
+    if len(name) > 1  or len(name)==0:
         print('Only 1 exchange for pump support for now')
         return
 
@@ -123,7 +123,7 @@ def cancel_all(winners, losers, name):
         [core.cancel_all_by_name(n) for n in name]
     elif name:
         core.cancel_all_by_name(name)
-    pprint('Canceled')
+    print('Canceled')
 
 
 @pump.command('grid_winners')

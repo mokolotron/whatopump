@@ -226,8 +226,5 @@ class BitfinexSpotController(Controller):
 
         resp = self.winners.multi_orders(symbol, side, list_flat_grid, _type="EXCHANGE LIMIT", hidden=hidden)
         # create report for orders result
-        report = dict()
-        for ex_name, vals in resp.items():
-            report[ex_name] = [{'status': ex_resp[7], 'price': ex_resp[4][0][16] if ex_resp[4][0] else ex_resp[4][16], 'amount': ex_resp[4][0][6] if ex_resp[4][0] else ex_resp[4][6]} for ex_resp in vals[4]]
-        return report
+        return resp
 

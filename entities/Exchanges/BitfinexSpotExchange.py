@@ -68,7 +68,9 @@ class BitfinexSpotExchange(SpotExchange):
                 amount=str(level[1]).replace(',', '.'),
                 flags=_flags)
             ops.append(order_operation)
-        resp = client.order_multi_op(ops)
+        ex_resp = client.order_multi_op(ops)
+        resp = {'status': ex_resp[7], 'price': ex_resp[4][0][16] if ex_resp[4][0] else ex_resp[4][16],
+                            'amount': ex_resp[4][0][6] if ex_resp[4][0] else ex_resp[4][6]}
         return resp
 
     def market_order(self, symbol, side, qty):
