@@ -70,7 +70,7 @@ class Controller(ABC):
     def add_split_volume(self, original_list: List, price_volume: List, max_quote_ord_in_base) -> List:
         raise NotImplementedError
 
-    def create_win_grid(self, symbol, to_price, x, ratio, hidden, levels):
+    def create_win_grid(self, symbol, to_price, x, ratio, hidden, levels, from_price=0):
         raise NotImplementedError
 
 

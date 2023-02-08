@@ -48,12 +48,12 @@ class BinanceSpotExchange(BitfinexSpotExchange):
         result = {k: v.get() for k, v in result.items()}
         return result
 
-
     def cancel_all(self):
         orders = self.client.fetch_open_orders()
         order_ids = [(o['id'], o['symbol']) for o in orders]
         cancel_result = [self.client.cancel_order(id=o[0], symbol=o[1]) for o in order_ids]
         return cancel_result
+
 
 
 

@@ -122,14 +122,21 @@ class Core:
     def calc_separately(self):
         return self.controller.calc_separately()
 
-    def create_win_grid(self, symbol, to_price, x, hidden, ratio, levels):
+    def create_win_grid(self, symbol, to_price, x, hidden, ratio, levels, from_price=0):
         if levels > 100:
             raise AttributeError("levels must be less than 100")
 
         if not ratio:
             ratio = 100
 
-        return self.controller.create_win_grid(symbol, to_price, x, ratio, hidden, levels=levels)
+        return self.controller.create_win_grid(symbol, to_price, x, ratio, hidden, levels=levels, from_price=from_price)
+
+    def get_orders(self, name):
+        ex = (self.controller.losers + self.controller.winners).get_by_name(name)
+        orders = ex.get_orders()
+        for o in orders:
+            o['info'] = {}
+        return orders
 
 
 

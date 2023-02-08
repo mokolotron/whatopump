@@ -129,14 +129,28 @@ def cancel_all(winners, losers, name):
 @pump.command('grid_winners')
 @add_options(symbol_option)
 @add_options(price_option)
+@click.option('-fp', '--from_price', 'from_price', type=float, required=False, help='price with lowest level in grid', default=0)
 @click.option('-x', '--x', 'x', type=float, default=None, help='to_price=current_price*x. example of x: 1.25 pump on 25% from current')
 @click.option('-hi', '--hidden', 'hidden', is_flag=True, default=False, help='use hidden orders if possible')
 @click.option('-r', '--ratio', 'ratio', type=float, required=False, help='% of your free quote balance using in total grid value')
 @click.option('-l', '--levels', 'levels', type=int, required=True, help='Count of levels in grid')
-def grid_winners(symbol, to_price, x, hidden, ratio, levels):
+def grid_winners(symbol, to_price, x, hidden, ratio, levels, from_price):
     """place orders in the grid for winners"""
-    result = core.create_win_grid(symbol, to_price, x, hidden, ratio, levels)
+    # if from_price is None:
+    #     from_price = 0
+    result = core.create_win_grid(symbol, to_price, x, hidden, ratio, levels, from_price)
     pprint(result)
+
+@pump.command('show_orders')
+@add_options(name_option)
+def show_orders(name):
+    if not name:
+        print('Please, input name')
+        return
+
+    orders = core.get_orders(name[0])
+    pprint(orders)
+
 
 
 if __name__ == "__main__":

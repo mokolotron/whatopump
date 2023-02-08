@@ -195,7 +195,7 @@ class BitfinexSpotController(Controller):
         base_sorted_arr = sorted(result, key=itemgetter(1))
         return base_sorted_arr
 
-    def create_win_grid(self, symbol, to_price, x, ratio, hidden, levels):
+    def create_win_grid(self, symbol, to_price, x, ratio, hidden, levels, from_price=0):
         if not to_price and not x:
             self.logger.error("one of to_price or x args must be taken")
             return
@@ -205,6 +205,8 @@ class BitfinexSpotController(Controller):
             hidden = False
         ratio = ratio/100
         current_price = self.data_getter.get_price(symbol)
+        if from_price > 0:
+            current_price = from_price
         side = 'sell'
         # balances = self.winners.get_quote_balances_by_symbol(symbol)
         baseAsset = symbol.split('/')[0]

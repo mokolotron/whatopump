@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import ccxt
 
 
 class Exchange(ABC):
@@ -6,10 +7,12 @@ class Exchange(ABC):
     SIDE_SELL: str
     IS_SUPPORT_HIDDEN: bool
 
+
     def __init__(self, api_key, api_secret, name):
         self.api_key: str = api_key
         self.api_secret: str = api_secret
         self.name: str = name
+        self.client: ccxt.Exchange = ccxt.Exchange()
 
     def get_balance(self):
         raise NotImplementedError
@@ -35,4 +38,7 @@ class Exchange(ABC):
 
     def get_quote_balance_by_symbol(self, symbol):
         raise NotImplementedError
+
+    def get_orders(self):
+        return self.client.fetch_open_orders()
 
