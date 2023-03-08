@@ -222,7 +222,7 @@ class BitfinexSpotController(Controller):
                 amount = balance / levels
                 rounded_amount = ((amount * 10**7)//1)/10**7  # 7 digits after point
                 list_grid.append([price, rounded_amount])
-        list_flat_grid = list()
+            list_flat_grid = list()
         for line in list_grid:
             list_flat_grid = self.add_split_volume(list_flat_grid, line, max_quote_order_in_base)
 

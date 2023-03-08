@@ -3,6 +3,7 @@ from typing import List
 from ccxt import BadSymbol
 
 from entities.Exchanges.Exchange import Exchange
+from entities.Exchanges.ExchangeContainer import ExchangeContainer
 from entities.Factories.AbstractFactory import AbstractFactory
 from create_logger_module import create_logger, LOG_NAME
 
@@ -87,8 +88,9 @@ class Core:
         result_sum = self.controller.data_getter.accurate_eval(symbol, to_price)
         return book, result_sum
 
-    def convert(self, name, symbol: str, side):
-        self.controller.convert(name, symbol, side)
+    def convert(self, names, symbol: str, side):
+        for name in names:
+            self.controller.convert(name, symbol, side)
 
     def winners_cancel_all(self):
         self.controller.cancel_all_in_selected(self.controller.winners)
@@ -131,12 +133,29 @@ class Core:
 
         return self.controller.create_win_grid(symbol, to_price, x, ratio, hidden, levels=levels, from_price=from_price)
 
-    def get_orders(self, name):
-        ex = (self.controller.losers + self.controller.winners).get_by_name(name)
-        orders = ex.get_orders()
-        for o in orders:
-            o['info'] = {}
-        return orders
+    def get_orders(self, names):
+        if not bool(names):
+            names = list(set(ex.name for ex in self.controller.winners + self.controller.losers))  # all names
+        orders_dict ={}
+        for name in names:
+            ex = (self.controller.losers + self.controller.winners).get_by_name(name)
+            orders = ex.get_orders()
+            for o in orders:
+                o['info'] = {}
+            orders_dict[name] = orders
+        return orders_dict
+
+    def order_history(self, names, symbol):
+        if not bool(names):
+            names = list(set(ex.name for ex in self.controller.winners + self.controller.losers))  # all names
+
+        orders_dict = {}
+        for name in names:
+            ex = (self.controller.losers + self.controller.winners).get_by_name(name)
+            orders = ex.order_history(symbol)
+            orders_dict[name] = orders
+        return orders_dict
+
 
 
 

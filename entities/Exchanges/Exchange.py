@@ -42,3 +42,8 @@ class Exchange(ABC):
     def get_orders(self):
         return self.client.fetch_open_orders()
 
+    def order_history(self, symbol):
+        orders = self.client.fetch_orders(symbol=symbol)
+        for order in orders:
+            order['info']={}
+

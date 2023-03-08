@@ -157,6 +157,18 @@ def rjson(file_name):
         create_logger().error(f'File{file_name} not exist now data.json will be available after first \'evaluate --all ...\' command. calculated_data.json will be available after first \'calculate_evaluated\' command')
         return False
 
+@evaluate.command('order_history')
+@add_options(name_option)
+@add_options(all_flag_option)
+@add_options(symbol_option)
+def order_history(name, is_all, symbol):
+    """Show last order history"""
+    if not (is_all or name):
+        print('You must use --all or --name')
+        return
+    orders = core.order_history(name, symbol)
+    pprint(orders)
+
 
 if __name__ == "__main__":
     config = toml.load('settings/config.toml')

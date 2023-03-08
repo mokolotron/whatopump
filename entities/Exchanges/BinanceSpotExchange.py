@@ -23,13 +23,13 @@ class BinanceSpotExchange(BitfinexSpotExchange):
         self.client.set_sandbox_mode(config['Testnet'])
         self.client.options['warnOnFetchOpenOrdersWithoutSymbol'] = False
 
-        self.async_client = ccxt.async_support.binance({
-            'apiKey': self.api_key,
-            'secret': self.api_secret,
-            'proxies': self.proxy
-        })
-        self.async_client.set_sandbox_mode(config['Testnet'])
-        self.async_client.options['warnOnFetchOpenOrdersWithoutSymbol'] = False
+        # self.async_client = ccxt.async_support.binance({
+        #     'apiKey': self.api_key,
+        #     'secret': self.api_secret,
+        #     'proxies': self.proxy
+        # })
+        # self.async_client.set_sandbox_mode(config['Testnet'])
+        # self.async_client.options['warnOnFetchOpenOrdersWithoutSymbol'] = False
 
     def create_order(self, symbol, side, price, qty, ord_type='GTC', **kwargs):
         response = self.client.create_order(symbol=symbol, side=side, price=price, amount=qty, type='limit')

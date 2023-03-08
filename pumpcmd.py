@@ -5,7 +5,8 @@ import click
 import toml
 
 from core import define_factory, Core
-from evaluatecmd import add_options, symbol_option, price_option, name_option, side_option, quantity_option, x_pump_option
+from evaluatecmd import add_options, symbol_option, price_option, name_option, side_option, quantity_option, \
+    x_pump_option, all_flag_option
 
 
 @click.group()
@@ -113,8 +114,14 @@ def convert(name, symbol: str, side):
 @click.option('--winners', is_flag=True, default=False, help='make for all winners')
 @click.option('--losers', is_flag=True, default=False, help='make for all losers')
 @add_options(name_option)
-def cancel_all(winners, losers, name):
+@add_options(all_flag_option)
+def cancel_all(winners, losers, name, is_all):
     """Cancel all orders"""
+    if is_all:
+        names = list(set(ex.name for ex in core.controller.winners + core.controller.losers))  # all names
+        [core.cancel_all_by_name(n) for n in names]
+        print('Canceled')
+        return
     if winners:
         core.winners_cancel_all()
     if losers:
@@ -143,12 +150,14 @@ def grid_winners(symbol, to_price, x, hidden, ratio, levels, from_price):
 
 @pump.command('show_orders')
 @add_options(name_option)
-def show_orders(name):
-    if not name:
-        print('Please, input name')
+@add_options(all_flag_option)
+def show_orders(name, is_all):
+
+    if not (is_all or name):
+        print('You must use --all or --name')
         return
 
-    orders = core.get_orders(name[0])
+    orders = core.get_orders(name)
     pprint(orders)
 
 
