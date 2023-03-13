@@ -4,6 +4,6 @@ requests~=2.25.1
 requests[socks]
 toml~=0.10.2
 Twisted~=20.3.0
-ccxt~=1.57
+ccxt~=2.9.13
 bitfinex-v2-proxy
 tabulate
