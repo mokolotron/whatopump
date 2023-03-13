@@ -21,7 +21,6 @@ class BitfinexSpotFactory(AbstractFactory):
 
     def create_data_getter(self, config) -> DataGetter:
         return BitfinexDataGetter(config['key'], config['secret'], config['proxy'])
-        # return BitfinexDataGetter(config['key'], config['secret'], config['proxy'])
 
     def create_controller(self, winners: ExchangeContainer, losers: ExchangeContainer,
                           data_getter: DataGetter, logger) -> Controller:

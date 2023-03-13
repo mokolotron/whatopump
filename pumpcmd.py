@@ -6,7 +6,7 @@ import toml
 
 from core import define_factory, Core
 from evaluatecmd import add_options, symbol_option, price_option, name_option, side_option, quantity_option, \
-    x_pump_option, all_flag_option
+    x_pump_option, all_flag_option, ratio_option
 
 
 @click.group()
@@ -95,7 +95,9 @@ def order(name, symbol, side, to_price, qty, winners, losers, hidden):
 @add_options(name_option)
 @add_options(symbol_option)
 @add_options(side_option)
-def convert(name, symbol: str, side):
+@add_options(ratio_option)
+@add_options(quantity_option)
+def convert(name, symbol: str, side, ratio, qty):
     """Place all quote/base amount by market order on buy/sell"""
     
     # check input
@@ -106,8 +108,8 @@ def convert(name, symbol: str, side):
     if not name:
         print('Please, input name')
         return
-    
-    core.convert(name, symbol, side)
+
+    core.convert(name, symbol, side, ratio, qty)
 
 
 @pump.command('cancel_all')
@@ -123,9 +125,9 @@ def cancel_all(winners, losers, name, is_all):
         print('Canceled')
         return
     if winners:
-        core.winners_cancel_all()
+        core.controller.cancel_all_in_selected(core.controller.winners)
     if losers:
-        core.losers_cancel_all()
+        core.controller.cancel_all_in_selected(core.controller.losers)
     if len(name) > 0:
         [core.cancel_all_by_name(n) for n in name]
     elif name:

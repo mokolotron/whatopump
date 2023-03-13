@@ -88,25 +88,27 @@ class Core:
         result_sum = self.controller.data_getter.accurate_eval(symbol, to_price)
         return book, result_sum
 
-    def convert(self, names, symbol: str, side):
+    def convert(self, names, symbol: str, side, ratio=None, quantity=None):
+        balance = self.controller.get_ex_by_name(names[0]).get_balance()['free']
+        base, quote = symbol.split('/')
+        if quantity:
+            balance[base] = quantity
+            balance[quote] = quantity
+        if side == "BUY":
+            base_qty = self.controller.data_getter.convert(symbol, side, balance[quote])
+        else:       # sell
+            base_qty = balance[base]
+        if ratio:
+            base_qty *= ratio / 100
         for name in names:
-            self.controller.convert(name, symbol, side)
-
-    def winners_cancel_all(self):
-        self.controller.cancel_all_in_selected(self.controller.winners)
-
-    def losers_cancel_all(self):
-        self.controller.cancel_all_in_selected(self.controller.losers)
+            self.controller.convert(name, symbol, side, amount=base_qty)
 
     def cancel_all(self):
         self.controller.cancel_all_in_selected(self.controller.losers + self.controller.winners)
 
     def cancel_all_by_name(self, name):
-        ex = (self.controller.losers + self.controller.winners).get_by_name(name)
+        ex: Exchange = (self.controller.losers + self.controller.winners).get_by_name(name)
         ex.cancel_all()
-
-    def create_winners_full_order(self, symbol, side, price):
-        return self.controller.create_full_order(self.controller.winners, symbol, str(side).lower(), price)
 
     def get_symbols_by_asset(self, quote):
         symbols = self.controller.data_getter.all_symbols_by_asset(quote)

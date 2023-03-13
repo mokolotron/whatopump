@@ -3,9 +3,10 @@ import ccxt
 
 
 class Exchange(ABC):
-    SIDE_BUY: str
-    SIDE_SELL: str
+    SIDE_BUY: str = "BUY"
+    SIDE_SELL: str = "SELL"
     IS_SUPPORT_HIDDEN: bool
+    MAX_ORDER_LIMIT: int
 
 
     def __init__(self, api_key, api_secret, name):
@@ -15,7 +16,14 @@ class Exchange(ABC):
         self.client: ccxt.Exchange = ccxt.Exchange()
 
     def get_balance(self):
-        raise NotImplementedError
+        balance = self.client.fetch_balance({'type': 'spot'})
+        return balance
+
+    def get_quote_balance_by_symbol(self, symbol):
+        balances = self.get_balance()
+        quote = symbol.split('/')[1]
+        quote_balance = balances[quote]['free']
+        return float(quote_balance)
 
     def create_order(self, symbol, side, price, qty, ord_type='', **kwargs):
         raise NotImplementedError
@@ -32,12 +40,8 @@ class Exchange(ABC):
     def cancel_all(self):
         raise NotImplementedError
 
-    @abstractmethod
     def fetch(self):
         pass
-
-    def get_quote_balance_by_symbol(self, symbol):
-        raise NotImplementedError
 
     def get_orders(self):
         return self.client.fetch_open_orders()

@@ -25,9 +25,6 @@ class BitfinexSpotExchange(SpotExchange):
         self.nonce_multiplier = nonce_multiplier
         self.client.nonce_multiplier = self.nonce_multiplier
 
-    def fetch(self):
-        pass
-
     def create_order(self, symbol, side, price, qty, ord_type='GTC', **kwargs):
         is_hidden = kwargs.get('hidden', False)
         response = self.client.create_order(symbol, 'limit', side.lower(),
@@ -35,15 +32,7 @@ class BitfinexSpotExchange(SpotExchange):
                                             {'timeInForce': ord_type, 'hidden': int(is_hidden)})
         return response
 
-    def get_balance(self):
-        balance = self.client.fetch_balance({'type': 'spot'})
-        return balance
 
-    def get_quote_balance_by_symbol(self, symbol):
-        balances = self.get_balance()
-        quote = symbol.split('/')[1]
-        quote_balance = balances[quote]['free']
-        return float(quote_balance)
 
     def multi_market_orders(self, symbol, side, list_volume, _type="EXCHANGE IOC",  **kwargs):
         client = ClientV2(self.api_key, self.api_secret, proxy=self.proxy,

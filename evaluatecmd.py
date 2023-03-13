@@ -16,6 +16,7 @@ quote_option = [click.option('--quote', '-q', 'quote', default='USDT', type=str,
 name_option = [click.option('--name', '-n', 'name', default=None,  multiple=True, type=str, help='exchange name')]
 side_option = [click.option('--side', '-si', 'side', default=None, type=click.Choice(['BUY', 'SELL'], case_sensitive=False), required=True, help='side of order')]
 quantity_option = [click.option('--qty', '-q', 'qty', default=None, type=float, help='amount for making order')]
+ratio_option = [click.option('-r', '--ratio', 'ratio', type=float, required=False, help='% of your free quote balance using in total grid value')]
 
 
 def add_options(options):
@@ -134,11 +135,11 @@ def evaluate_by_quote(quote, x_pump):
 @evaluate.command("calculate_evaluated")
 @click.option('--union', '-u', 'union', is_flag=True, default=False, help="Calculate and sort for base qty (for long permanent pump)")
 def calculate_evaluated(union: bool):
+    """Show result from last \'evaluate_all\' command in USD value"""
     if union:
         result = core.calc_eval_asset()
     else:
         result = core.calc_separately()
-    """Show result from last \'evaluate_all\' command in USD value"""
 
 
     pprint(result)

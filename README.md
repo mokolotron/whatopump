@@ -177,7 +177,7 @@ https://www.buymeacoffee.com/mokolotron
 
 **Or support by contributing to this project**. Feel free to open issues and pull requests. 
 
-I can help with installation and configuration. Contact me in telegram: @mokolotron or email: mokolotro2000@gmail.com
+I can help with installation and configuration. Contact me in telegram: @mokolotron or email: mokolotron2000@gmail.com
 
 
 
