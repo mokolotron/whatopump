@@ -26,6 +26,8 @@ def add_options(options):
         return func
     return _add_options
 
+def without_keys(d, keys):
+    return {x: d[x] for x in d if x not in keys}
 
 @click.group()
 def evaluate():
@@ -52,11 +54,16 @@ def show_options(**kwargs):
 @add_options(name_option)
 @add_options(all_flag_option)
 def balance(name, is_all):
-    """Show balance by name"""
+    """Show b by name"""
     if not (is_all or name):
         print('You must use --all or --name')
         return
-    pprint(core.balances(name))
+    result = core.balances(name)
+    payload = {}
+    for acc_name, b in result.items():
+        keys_exclude = ['free', 'total', 'used', 'timestamp']
+        payload[acc_name] = without_keys(b, keys_exclude)
+    pprint(payload, width=150)
 
 
 @evaluate.command('evaluate_all')

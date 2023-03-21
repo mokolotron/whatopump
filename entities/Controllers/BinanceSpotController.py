@@ -32,11 +32,12 @@ class BinanceSpotController(Controller):
          self.logger.info(f"Too many orders {len(list_flat_grid)}, current limit is {exchange.MAX_ORDER_LIMIT}. "
                           f"Try to increase MAX_ORDER_MULT in config.toml or use smaller amount of order")
          return
-      response = exchange.multi_market_orders(symbol, side, list_flat_grid, ord_type='IOC', type='limit')
+      response = exchange.multi_market_orders(symbol, side, list_flat_grid, ord_type='GTC', type='limit')
       return response
 
    def single_loser_pump(self, name, symbol, to_price: float, quote_qty: float):
       result_loser = self.losers.get_by_name(name)
+      balance = result_loser.get_balance()
       list_flat_levels = list()
       book = self.data_getter.get_calculated_book(symbol, to_price)
       max_order = self.data_getter.get_max_order(symbol) * self.MAX_ORDER_MULT
@@ -47,7 +48,7 @@ class BinanceSpotController(Controller):
       temp = 0
       for el in book['asks']:
          temp += el[1]
-         if temp >= max_order:
+         if temp >= max_order: # if first book level is more than max order - the level will 0.0 it is bug
             level = [to_price, temp - el[1], el[2], el[3], el[4]] # get previous level sum
             levels.append(level)
             temp = el[1] # to 0 except this level
@@ -55,6 +56,8 @@ class BinanceSpotController(Controller):
             level = [to_price, temp, el[2], el[3], el[4]]
             levels.append(level)
             break
+
+      levels = [ level for level in levels if level[1] > 0] # fix bug above (replace 0 with min order or change)
 
       for level in levels:
          list_flat_levels = self.add_split_volume(list_flat_levels, level, max_order)
@@ -64,14 +67,19 @@ class BinanceSpotController(Controller):
          raise AttributeError("Maybe to_price < ask. Check it")
       if calc_list_flat_levels[-1][4] > quote_qty:
          raise AttributeError(f"quote_qty {quote_qty} is not enough to pump, need {calc_list_flat_levels[-1][4]}")
-      free_funds = base_qty - calc_list_flat_levels[-1][3]
-      if free_funds > 0:
-         list_flat_levels = self.add_split_volume(list_flat_levels, [to_price, free_funds], max_order)
+      # free_funds = base_qty - calc_list_flat_levels[-1][3]
+      free_funds_quote = quote_qty - calc_list_flat_levels[-1][4]
+      free_funds_base = free_funds_quote / to_price
+      if free_funds_quote > 0:
+         # calculated_free_fund_list = self.data_getter.calculate_book([[to_price, free_funds]])[0]
+         list_flat_levels = self.add_split_volume(list_flat_levels, [to_price, free_funds_base], max_order)
       list_flat_levels = [[level[0], self.data_getter.amount_to_precision(symbol, level[1])] + level[2:] for level in
                           list_flat_levels]
+      # self._check_if_all_orders_executed(list_flat_levels, calc_list_flat_levels[-1][4], result_loser, symbol, balance) # DEBUG
       resp = result_loser.multi_market_orders(symbol, "BUY", list_flat_levels, ord_type="IOC")
       self.logger.debug(f"Multiple Orders created: {resp}")
-      self.__check_if_all_orders_executed(list_flat_levels, quote_qty, result_loser, symbol) # repeat pump if not all orders executed
+      self._check_if_all_orders_executed(list_flat_levels, calc_list_flat_levels[-1][4], result_loser, symbol, balance) # DEBUG
+      # self._check_if_all_orders_executed(list_flat_levels, quote_qty, result_loser, symbol, balance) # repeat pump if not all orders executed
       self.logger.info("Finish pump")
 
    def add_split_volume(self, original_list: List, price_volume: List, max_quote_ord_in_base) -> List:
@@ -84,21 +92,29 @@ class BinanceSpotController(Controller):
       new_original_list.extend(new_list_part)
       return new_original_list
 
-   def __check_if_all_orders_executed(self, list_flat_levels, prev_quote_qty, result_loser: Exchange, symbol: str):
-      spend_sum_quote = list_flat_levels[-1][4]
-      new_balance = result_loser.get_balance()
+   def _check_if_all_orders_executed(self, list_flat_levels, prev_quote_qty, result_loser: Exchange, symbol: str, balance):
+      # raw_levels = [l for l in list_flat_levels if len(l) <= 2]
       quote_name = symbol.split('/')[1]
-      new_qute_qty=new_balance[quote_name]['free']
-      expected_new_quote_qty = prev_quote_qty - spend_sum_quote
+      old_quote_balance = balance[quote_name]['free']
+      # # sum_levels = list(map(sum,zip(*raw_levels)))
+      # replace_index = len(list_flat_levels) - len(raw_levels)
+      # spend_sum_quote = list_flat_levels[replace_index-1][4]
+      spend_sum_quote = prev_quote_qty
+      # list_flat_levels = list_flat_levels[:replace_index] + calc_raw_levels
+      # spend_sum_quote = list_flat_levels[-1][4]
+      new_balance = result_loser.get_balance()
+      new_qute_qty = new_balance[quote_name]['free']
+      expected_new_quote_qty = old_quote_balance - spend_sum_quote
       if expected_new_quote_qty >= new_qute_qty:
          self.logger.info("Good, all orders executed")
          return
-      self.logger.info(f"Not all order executed: expected quote qty: {expected_new_quote_qty}, real qute qty: {new_qute_qty}")
+      self.logger.info(f"Not all order executed: expected quote qty: {expected_new_quote_qty}, real quote qty: {new_qute_qty}")
       not_executed_qty = new_qute_qty - expected_new_quote_qty
       self.logger.info(f"auto sending pump again on {not_executed_qty} {quote_name} ...")
       if self.allow_repeat_pump:
          self.allow_repeat_pump = False
-         self.single_loser_pump(result_loser.name, symbol, to_price=list_flat_levels[-1][0], quote_qty=not_executed_qty)
+         return self.single_loser_pump(result_loser.name, symbol, to_price=list_flat_levels[-1][0], quote_qty=not_executed_qty)
+      self.logger.info("Second pump not fully executed. Recursion prohibited")
 
 
 

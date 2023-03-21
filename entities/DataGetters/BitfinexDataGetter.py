@@ -20,6 +20,8 @@ class BitfinexDataGetter(DataGetter):
 
     def fetch(self):
         self.client.load_markets()
+        symbols = list(self.client.fetch_tickers().keys())
+        self.client.symbols = symbols
         pass
 
     def fetch_price(self, symbol, refresh=False):
@@ -93,9 +95,8 @@ class BitfinexDataGetter(DataGetter):
     def all_symbols_by_asset(self, asset):
         self.fetch()
         filtered_symbols = [symbol for symbol in self.client.symbols if asset in symbol.split('/')]
+        # list(tuple(symbol.split(':')[0] for symbol in self.client.symbols if asset in symbol))
         return filtered_symbols
-
-
 
     def get_quotes(self) -> List[str]:
         symbols_all = self.client.symbols

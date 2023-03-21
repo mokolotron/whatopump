@@ -143,6 +143,7 @@ def cancel_all(winners, losers, name, is_all):
 @click.option('-hi', '--hidden', 'hidden', is_flag=True, default=False, help='use hidden orders if possible')
 @click.option('-r', '--ratio', 'ratio', type=float, required=False, help='% of your free quote balance using in total grid value')
 @click.option('-l', '--levels', 'levels', type=int, required=True, help='Count of levels in grid')
+# @click.option('--qty', '-q', 'quantity', type=float, required=False, help='Amount of base currency to ')
 def grid_winners(symbol, to_price, x, hidden, ratio, levels, from_price):
     """place orders in the grid for winners"""
     # if from_price is None:
