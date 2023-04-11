@@ -3,10 +3,12 @@ from typing import List
 from ccxt import BadSymbol
 
 from entities.Exchanges.Exchange import Exchange
+from entities.Exchanges.ExchangeContainer import ExchangeContainer
 from entities.Factories.AbstractFactory import AbstractFactory
 from create_logger_module import create_logger, LOG_NAME
 
 from entities.Factories.BitfinexSpotFactory import BitfinexSpotFactory
+from entities.Factories.BinanceSpotFactory import BinanceSpotFactory
 
 
 def define_factory(ex_name) -> AbstractFactory:
@@ -86,24 +88,27 @@ class Core:
         result_sum = self.controller.data_getter.accurate_eval(symbol, to_price)
         return book, result_sum
 
-    def convert(self, name, symbol: str, side):
-        self.controller.convert(name, symbol, side)
-
-    def winners_cancel_all(self):
-        self.controller.cancel_all_in_selected(self.controller.winners)
-
-    def losers_cancel_all(self):
-        self.controller.cancel_all_in_selected(self.controller.losers)
+    def convert(self, names, symbol: str, side, ratio=None, quantity=None):
+        balance = self.controller.get_ex_by_name(names[0]).get_balance()['free']
+        base, quote = symbol.split('/')
+        if quantity:
+            balance[base] = quantity
+            balance[quote] = quantity
+        if side == "BUY":
+            base_qty = self.controller.data_getter.convert(symbol, side, balance[quote])
+        else:       # sell
+            base_qty = balance[base]
+        if ratio:
+            base_qty *= ratio / 100
+        for name in names:
+            self.controller.convert(name, symbol, side, amount=base_qty)
 
     def cancel_all(self):
         self.controller.cancel_all_in_selected(self.controller.losers + self.controller.winners)
 
     def cancel_all_by_name(self, name):
-        ex = (self.controller.losers + self.controller.winners).get_by_name(name)
+        ex: Exchange = (self.controller.losers + self.controller.winners).get_by_name(name)
         ex.cancel_all()
-
-    def create_winners_full_order(self, symbol, side, price):
-        return self.controller.create_full_order(self.controller.winners, symbol, str(side).lower(), price)
 
     def get_symbols_by_asset(self, quote):
         symbols = self.controller.data_getter.all_symbols_by_asset(quote)
@@ -118,14 +123,41 @@ class Core:
     def calc_eval_asset(self):
         return self.controller.calc_eval_asset()
 
-    def create_win_grid(self, symbol, to_price, x, hidden, ratio, levels):
+    def calc_separately(self):
+        return self.controller.calc_separately()
+
+    def create_win_grid(self, symbol, to_price, x, hidden, ratio, levels, from_price=0):
         if levels > 100:
             raise AttributeError("levels must be less than 100")
 
         if not ratio:
             ratio = 100
 
-        return self.controller.create_win_grid(symbol, to_price, x, ratio, hidden, levels=levels)
+        return self.controller.create_win_grid(symbol, to_price, x, ratio, hidden, levels=levels, from_price=from_price)
+
+    def get_orders(self, names):
+        if not bool(names):
+            names = list(set(ex.name for ex in self.controller.winners + self.controller.losers))  # all names
+        orders_dict ={}
+        for name in names:
+            ex = (self.controller.losers + self.controller.winners).get_by_name(name)
+            orders = ex.get_orders()
+            for o in orders:
+                o['info'] = {}
+            orders_dict[name] = orders
+        return orders_dict
+
+    def order_history(self, names, symbol):
+        if not bool(names):
+            names = list(set(ex.name for ex in self.controller.winners + self.controller.losers))  # all names
+
+        orders_dict = {}
+        for name in names:
+            ex = (self.controller.losers + self.controller.winners).get_by_name(name)
+            orders = ex.order_history(symbol)
+            orders_dict[name] = orders
+        return orders_dict
+
 
 
 

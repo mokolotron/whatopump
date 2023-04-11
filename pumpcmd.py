@@ -1,10 +1,12 @@
+import logging
 from pprint import pprint
 
 import click
 import toml
 
 from core import define_factory, Core
-from evaluatecmd import add_options, symbol_option, price_option, name_option, side_option, quantity_option, x_pump_option
+from evaluatecmd import add_options, symbol_option, price_option, name_option, side_option, quantity_option, \
+    x_pump_option, all_flag_option, ratio_option
 
 
 @click.group()
@@ -30,7 +32,7 @@ def make_pump(name, symbol, to_price, x_pump, quote_qty):
         print('Please, input -p or -x')
         return
 
-    if len(name) > 1:
+    if len(name) > 1  or len(name)==0:
         print('Only 1 exchange for pump support for now')
         return
 
@@ -93,7 +95,9 @@ def order(name, symbol, side, to_price, qty, winners, losers, hidden):
 @add_options(name_option)
 @add_options(symbol_option)
 @add_options(side_option)
-def convert(name, symbol: str, side):
+@add_options(ratio_option)
+@add_options(quantity_option)
+def convert(name, symbol: str, side, ratio, qty):
     """Place all quote/base amount by market order on buy/sell"""
     
     # check input
@@ -104,35 +108,61 @@ def convert(name, symbol: str, side):
     if not name:
         print('Please, input name')
         return
-    
-    core.convert(name, symbol, side)
+
+    core.convert(name, symbol, side, ratio, qty)
 
 
 @pump.command('cancel_all')
 @click.option('--winners', is_flag=True, default=False, help='make for all winners')
 @click.option('--losers', is_flag=True, default=False, help='make for all losers')
 @add_options(name_option)
-def cancel_all(winners, losers, name):
+@add_options(all_flag_option)
+def cancel_all(winners, losers, name, is_all):
     """Cancel all orders"""
+    if is_all:
+        names = list(set(ex.name for ex in core.controller.winners + core.controller.losers))  # all names
+        [core.cancel_all_by_name(n) for n in names]
+        print('Canceled')
+        return
     if winners:
-        core.winners_cancel_all()
+        core.controller.cancel_all_in_selected(core.controller.winners)
     if losers:
-        core.losers_cancel_all()
-    if name is not None:
+        core.controller.cancel_all_in_selected(core.controller.losers)
+    if len(name) > 0:
+        [core.cancel_all_by_name(n) for n in name]
+    elif name:
         core.cancel_all_by_name(name)
+    print('Canceled')
 
 
 @pump.command('grid_winners')
 @add_options(symbol_option)
 @add_options(price_option)
+@click.option('-fp', '--from_price', 'from_price', type=float, required=False, help='price with lowest level in grid', default=0)
 @click.option('-x', '--x', 'x', type=float, default=None, help='to_price=current_price*x. example of x: 1.25 pump on 25% from current')
 @click.option('-hi', '--hidden', 'hidden', is_flag=True, default=False, help='use hidden orders if possible')
 @click.option('-r', '--ratio', 'ratio', type=float, required=False, help='% of your free quote balance using in total grid value')
 @click.option('-l', '--levels', 'levels', type=int, required=True, help='Count of levels in grid')
-def grid_winners(symbol, to_price, x, hidden, ratio, levels):
+# @click.option('--qty', '-q', 'quantity', type=float, required=False, help='Amount of base currency to ')
+def grid_winners(symbol, to_price, x, hidden, ratio, levels, from_price):
     """place orders in the grid for winners"""
-    result = core.create_win_grid(symbol, to_price, x, hidden, ratio, levels)
+    # if from_price is None:
+    #     from_price = 0
+    result = core.create_win_grid(symbol, to_price, x, hidden, ratio, levels, from_price)
     pprint(result)
+
+@pump.command('show_orders')
+@add_options(name_option)
+@add_options(all_flag_option)
+def show_orders(name, is_all):
+
+    if not (is_all or name):
+        print('You must use --all or --name')
+        return
+
+    orders = core.get_orders(name)
+    pprint(orders)
+
 
 
 if __name__ == "__main__":

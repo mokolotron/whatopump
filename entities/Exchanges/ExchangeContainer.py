@@ -65,15 +65,6 @@ class ExchangeContainer:
         result = {k: v.get() for k, v in result.items()}
         return result
 
-    def create_grids(self, symbol, to_price, calc_quote_balances, hidden):
-        result = dict()
-        pool = ThreadPool(len(self.exchanges))
-        for ex in self.exchanges:
-            result[ex.name] = pool.apply_async(ex.create_grid,
-                                               (symbol, ex.SIDE_SELL, to_price, calc_quote_balances[ex.name], hidden))
-        result = {k: v.get() for k, v in result.items()}
-        return result
-
     def multi_orders(self, symbol, side, list_flat_grid, **kwargs):
         result = dict()
         pool = ThreadPool(len(self.exchanges))

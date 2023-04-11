@@ -49,7 +49,7 @@ class DataGetter(ABC):
         raise NotImplementedError
 
     @staticmethod
-    def calculate_book(book_part: List[list]):
+    def calculate_book(book_part: List[List]):
         m_book_part = list()
         sum_base = 0
         sum_quote = 0

@@ -16,6 +16,7 @@ quote_option = [click.option('--quote', '-q', 'quote', default='USDT', type=str,
 name_option = [click.option('--name', '-n', 'name', default=None,  multiple=True, type=str, help='exchange name')]
 side_option = [click.option('--side', '-si', 'side', default=None, type=click.Choice(['BUY', 'SELL'], case_sensitive=False), required=True, help='side of order')]
 quantity_option = [click.option('--qty', '-q', 'qty', default=None, type=float, help='amount for making order')]
+ratio_option = [click.option('-r', '--ratio', 'ratio', type=float, required=False, help='% of your free quote balance using in total grid value')]
 
 
 def add_options(options):
@@ -25,6 +26,8 @@ def add_options(options):
         return func
     return _add_options
 
+def without_keys(d, keys):
+    return {x: d[x] for x in d if x not in keys}
 
 @click.group()
 def evaluate():
@@ -51,11 +54,16 @@ def show_options(**kwargs):
 @add_options(name_option)
 @add_options(all_flag_option)
 def balance(name, is_all):
-    """Show balance by name"""
+    """Show b by name"""
     if not (is_all or name):
         print('You must use --all or --name')
         return
-    pprint(core.balances(name))
+    result = core.balances(name)
+    payload = {}
+    for acc_name, b in result.items():
+        keys_exclude = ['free', 'total', 'used', 'timestamp']
+        payload[acc_name] = without_keys(b, keys_exclude)
+    pprint(payload, width=150)
 
 
 @evaluate.command('evaluate_all')
@@ -90,10 +98,10 @@ def book(symbol, to_price, x_pump):
     if not (_book and cumulative_sum):
         return
     print('ASKS')
-    print(tabulate(_book['asks'], floatfmt=".5f",
+    print(tabulate(_book['asks'], floatfmt=".8f",
                    headers=['price', 'base_qty', 'quote_value', 'sum_base', 'sum_quote']))
     print('\nBIDS')
-    print(tabulate(_book['bids'], floatfmt=".5f",
+    print(tabulate(_book['bids'], floatfmt=".8f",
                    headers=['price', 'base_qty', 'quote_value', 'sum_base', 'sum_quote']))
     print('\n')
     pprint(f"{cumulative_sum} {symbol.split('/')[1]} need for pump {symbol} to price {to_price}: ")
@@ -130,11 +138,17 @@ def evaluate_by_quote(quote, x_pump):
     pprint(result)
 
 
-@evaluate.command("calculate_evaluated")
-def calculate_evaluated():
-    """Show result from last \'evaluate_all\' command in USD value"""
 
-    result = core.calc_eval_asset()
+@evaluate.command("calculate_evaluated")
+@click.option('--union', '-u', 'union', is_flag=True, default=False, help="Calculate and sort for base qty (for long permanent pump)")
+def calculate_evaluated(union: bool):
+    """Show result from last \'evaluate_all\' command in USD value"""
+    if union:
+        result = core.calc_eval_asset()
+    else:
+        result = core.calc_separately()
+
+
     pprint(result)
 
 
@@ -150,6 +164,18 @@ def rjson(file_name):
     except FileNotFoundError as e:
         create_logger().error(f'File{file_name} not exist now data.json will be available after first \'evaluate --all ...\' command. calculated_data.json will be available after first \'calculate_evaluated\' command')
         return False
+
+@evaluate.command('order_history')
+@add_options(name_option)
+@add_options(all_flag_option)
+@add_options(symbol_option)
+def order_history(name, is_all, symbol):
+    """Show last order history"""
+    if not (is_all or name):
+        print('You must use --all or --name')
+        return
+    orders = core.order_history(name, symbol)
+    pprint(orders)
 
 
 if __name__ == "__main__":

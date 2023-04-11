@@ -1,3 +1,4 @@
 /settings/*
 !/settings/config-sample.toml
 test.py
+*.pyc
