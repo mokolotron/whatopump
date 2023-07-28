@@ -1,5 +1,6 @@
 import json
 import os
+from itertools import permutations
 from logging import Logger
 from operator import itemgetter
 from typing import List
@@ -10,6 +11,9 @@ from entities.DataGetters.DataGetter import DataGetter
 from entities.Exchanges.Exchange import Exchange
 from entities.Exchanges.ExchangeContainer import ExchangeContainer
 from abc import abstractmethod, ABC
+
+from entities.Helpers.PriceGraph import CurrencyGraph
+
 CONFIG_PATH = 'settings/config.toml'
 
 
@@ -101,31 +105,38 @@ class Controller(ABC):
             return None
         with open('data.json', 'r') as f:
             data = json.load(f)
+            # using graph
             quote_s = list(data.keys())
-            convert_prices = dict()
-            for q in quote_s:
-                usdt_symbol = q + '/USDT'
-                if q == 'USD' or q == 'USDT':
-                    convert_prices[q] = 1
-                    continue
-                convert_prices[q] = self.data_getter.get_price(usdt_symbol) if self.data_getter.is_symbol_exist(usdt_symbol) else 0
-                # if price not found try to reverse symbol to get it price
-                if convert_prices[q] == 0:
-                    reversed_symbol = 'USDT/' + q
-                    convert_prices[q] = self.data_getter.get_price(reversed_symbol) if self.data_getter.is_symbol_exist(reversed_symbol) else 0
-            # filter convert_prices with zero price
-            convert_prices = {k: v for k, v in convert_prices.items() if v != 0}
+            pairs = list(permutations(quote_s, 2))
+            not_filtered_symbols = [ f"{p[0]}/{p[1]}" for p in pairs]
+            quote_symbols = [p for p in not_filtered_symbols if self.data_getter.is_symbol_exist(p)]
+            non_filtered_prices = self.data_getter.get_prices(quote_symbols)
+            prices = {k: p for k, p in non_filtered_prices.items() if p != 0}
+            graph = CurrencyGraph()
+
+            for key_s in prices:
+                base, quote = key_s.split('/')
+                graph.add_edge(base, quote, prices[key_s])
+
             result = []
             for quote_name, values in data.items():
-                if quote_name not in convert_prices:
-                    self.logger.warning(f"No price for convert {quote_name} to USD. skip")
+                start_currency = quote_name
+                target_currency = "USDT"
+                try:
+
+                    values_mod = [[v[0], graph.convert_currency(start_currency, target_currency, v[1]), v[2]] for v in values]
+                    result.extend(values_mod)
+                except ValueError as e:
+                    self.logger.error(e)
+                    self.logger.warning(f"error in converting. Quote {quote_name} will be ignored")
                     continue
-                convert_price = convert_prices[quote_name]
-                values_mod = [[v[0], v[1] * convert_price, v[2]] for v in values]
-                result.extend(values_mod)
 
         base_sorted_arr = sorted(result, key=itemgetter(1))
         return base_sorted_arr
+
+    def _find_convert_price(self, from_asset, to_asset):
+        pass
+
 
     def eval_all(self, x_pump: float):
 

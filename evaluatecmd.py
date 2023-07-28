@@ -135,6 +135,9 @@ def evaluate_by_quote(quote, x_pump):
         return
 
     result = core.eval_many_by_quote(quote=quote, x_pump=x_pump)
+    print("quote: [ [symbol, value in quote, target price (price*x)] \n"
+          "          ...\n"
+          "       ]")
     pprint(result)
 
 
@@ -148,7 +151,7 @@ def calculate_evaluated(union: bool):
     else:
         result = core.calc_separately()
 
-
+    print("[symbol, value in USD, target price (price*x)]")
     pprint(result)
 
 
