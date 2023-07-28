@@ -1,6 +1,8 @@
-exchange_name="BitfinexSpotFactory"     # support [BitfinexSpotFactory, ]
+exchange_name="BitfinexSpotFactory"     # support [BitfinexSpotFactory, BinanceSpotFactory]
 INSURANCE = 2.0     # %
-MAX_ORDER_MULT = 30 # %     # decrease max order to this value
+MAX_ORDER_MULT = 20 # %     # use this % of max order to split orders amount
+Testnet = false      # IMPORTANTT !
+MAX_LOSS_CONVERT = 5 # %     # max lose from market price when convert
 
 [data_getter]   # need for gettings data from exchange, not required.
     name=""     # custom string
