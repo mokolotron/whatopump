@@ -2,6 +2,7 @@ from typing import List, Dict
 
 import ccxt
 
+import create_logger_module
 from entities.DataGetters.DataGetter import DataGetter
 
 
@@ -102,7 +103,12 @@ class BitfinexDataGetter(DataGetter):
         symbols_all = self.client.symbols
         quotes = []
         for symbol in symbols_all:
-            quote = symbol.split('/')[1]
+            quote = symbol.split('/')
+            try:
+                quote = quote[1]
+            except IndexError as e:
+                create_logger_module.create_logger().error(f"Skip symbol {symbol} because cant split it on base/quote. Internal: \"{e}\"")
+                continue
             if (quote not in quotes) and ('F0' not in quote) and 'TEST' not in quote:
                 if quote == "AAA" or quote == "BBB":
                     continue
