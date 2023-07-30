@@ -9,6 +9,7 @@ from create_logger_module import create_logger, LOG_NAME
 
 from entities.Factories.BitfinexSpotFactory import BitfinexSpotFactory
 from entities.Factories.BinanceSpotFactory import BinanceSpotFactory
+from entities.Helpers.Helpers import Pump, OHLC
 
 
 def define_factory(ex_name) -> AbstractFactory:
@@ -157,6 +158,30 @@ class Core:
             orders = ex.order_history(symbol)
             orders_dict[name] = orders
         return orders_dict
+
+    def get_pumps_history(self, min_x=3) -> List[Pump]:
+        self.controller.data_getter.fetch()
+        pumps : List[Pump] = []
+        for symbol in self.controller.data_getter.get_symbols():
+            try:
+                ohlc_l: List[OHLC] = self.controller.data_getter.get_ohlc(symbol, '1d', None, 365)
+                for ohlc in ohlc_l:
+                    if ohlc.high > ohlc.open * min_x:
+                        pump = Pump()
+                        pump.symbol = symbol
+                        pump.x = ohlc.high / ohlc.open
+                        pump.dump_x = ohlc.low / ohlc.open
+                        pump.date = ohlc.date
+                        pump.volume = ohlc.volume
+                        pump.ohlc = ohlc
+                        pumps.append(pump)
+                        self.controller.logger.info(f"Pump found: {pump.__repr__()}")
+            except Exception as e:
+                self.controller.logger.error(f"Error in symbol {symbol}. Skip this symbol. Reason {list(e.args)}")
+                continue
+        return pumps
+
+
 
 
 

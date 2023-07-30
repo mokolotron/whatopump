@@ -36,7 +36,8 @@ class BitfinexDataGetter(DataGetter):
 
     def get_prices(self, symbols: List[str]) -> Dict[str, float]:
         tickers = self.client.fetch_tickers(symbols)
-        prices = {symbol: tickers[symbol]['ask'] for symbol in symbols}
+        tickers = {s: t for s, t in tickers.items() if t['ask'] and t['bid']}
+        prices = {symbol: (tickers[symbol]['ask'] + tickers[symbol]['bid']) / 2 for symbol in symbols if symbol in tickers}
         return prices
 
     def amount_to_precision(self, symbol, amount) -> float:
@@ -115,8 +116,7 @@ class BitfinexDataGetter(DataGetter):
                 quotes.append(quote)
         return quotes
 
-    def is_symbol_exist(self, symbol) -> bool:
-        return symbol in self.client.symbols
+
 
 
         # absolute_main_quote = 'BTC'

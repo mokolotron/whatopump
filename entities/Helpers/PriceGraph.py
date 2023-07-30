@@ -1,21 +1,23 @@
 import heapq
 
 class CurrencyGraph:
+    fee = 1.01 # 1%
+
     def __init__(self):
         self.graph = {}
 
-    def add_edge(self, base, quote, rate):
-        if base not in self.graph:
-            self.graph[base] = {}
-        self.graph[base][quote] = rate
+    def add_edge(self, currency1, currency2, rate):
+        if currency1 not in self.graph:
+            self.graph[currency1] = {}
+        self.graph[currency1][currency2] = rate * self.fee
 
-        if quote not in self.graph:
-            self.graph[quote] = {}
-        self.graph[quote][base] = 1.0 / rate
+        if currency2 not in self.graph:
+            self.graph[currency2] = {}
+        self.graph[currency2][currency1] = 1.0 / rate * self.fee
 
     def convert_currency(self, start_currency, target_currency, amount):
         if start_currency not in self.graph or target_currency not in self.graph:
-            raise ValueError("Invalid currency")
+            return 0
 
         # Dijkstra's algorithm
         min_heap = [(1.0, start_currency)]

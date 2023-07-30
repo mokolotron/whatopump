@@ -1,3 +1,4 @@
+import csv
 import json
 from pprint import pprint
 from tabulate import tabulate
@@ -179,6 +180,21 @@ def order_history(name, is_all, symbol):
         return
     orders = core.order_history(name, symbol)
     pprint(orders)
+
+@evaluate.command('pump_history')
+def pump_history():
+    """Show latest pumps on exchange"""
+    pumps = core.get_pumps_history()
+    print('date, symbol, volume, x')
+    pprint(pumps)
+    file_name = 'logs/pump_history.csv'
+    print(f"export to {file_name}")
+    with open(file_name, 'w', ) as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['date', 'symbol', 'x', 'volume', 'open', 'high', 'low', 'close', 'dump_x'])
+        for pump in pumps:
+            writer.writerow([pump.date.date(), pump.symbol, pump.x, pump.volume,
+                             pump.ohlc.open, pump.ohlc.high, pump.ohlc.low, pump.ohlc.close, pump.dump_x ])
 
 
 if __name__ == "__main__":

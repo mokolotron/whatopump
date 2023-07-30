@@ -25,3 +25,5 @@ class BinanceSpotDataGetter(BitfinexDataGetter):
         return self.fetch_order_book(symbol)
 
 
+
+

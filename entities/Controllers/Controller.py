@@ -106,25 +106,12 @@ class Controller(ABC):
         with open('data.json', 'r') as f:
             data = json.load(f)
             # using graph
-            quote_s = list(data.keys())
-            pairs = list(permutations(quote_s, 2))
-            not_filtered_symbols = [ f"{p[0]}/{p[1]}" for p in pairs]
-            quote_symbols = [p for p in not_filtered_symbols if self.data_getter.is_symbol_exist(p)]
-            non_filtered_prices = self.data_getter.get_prices(quote_symbols)
-            prices = {k: p for k, p in non_filtered_prices.items() if p != 0}
-            graph = CurrencyGraph()
-
-            for key_s in prices:
-                base, quote = key_s.split('/')
-                graph.add_edge(base, quote, prices[key_s])
-
             result = []
             for quote_name, values in data.items():
                 start_currency = quote_name
                 target_currency = "USDT"
                 try:
-
-                    values_mod = [[v[0], graph.convert_currency(start_currency, target_currency, v[1]), v[2]] for v in values]
+                    values_mod = [[v[0], self.data_getter.not_direct_convert(start_currency, target_currency, v[1]), v[2]] for v in values]
                     result.extend(values_mod)
                 except ValueError as e:
                     self.logger.error(e)
