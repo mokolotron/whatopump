@@ -46,9 +46,13 @@ class DataGetter(ABC):
         prices = {k: p for k, p in non_filtered_prices.items() if p != 0}
         graph = CurrencyGraph()
 
+        fee = 0.001  # 0.1% fee for each deal
+
         for key_s in prices:
             base, quote = key_s.split('/')
-            graph.add_edge(base, quote, prices[key_s])
+            graph.add_edge(base, quote, prices[key_s] * (1.0 + fee))
+            graph.add_edge(quote, base, 1 / prices[key_s] * (1.0 + fee))
+            # graph.add_edge(base, quote, prices[key_s])
 
         self.graph = graph
 
@@ -94,7 +98,7 @@ class DataGetter(ABC):
 
     def not_direct_convert(self, asset_from, asset_to, count) -> float:
         self._load_graph()
-        result = self.graph.convert_currency(asset_from, asset_to, count)
+        result, path = self.graph.convert_currency(asset_from, asset_to, count)
         return result
 
     @abstractmethod
